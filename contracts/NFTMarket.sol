@@ -2,6 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -13,7 +14,7 @@ import "./tokens/ACDM.sol";
 import "./tokens/ERC721.sol";
 import "./tokens/ERC1155.sol";
 
-contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
+contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;    
     //Counter for items id 
@@ -25,12 +26,19 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     
+    /*Time for auction*/
     uint256 public auctionTime = 3 * 24 * 3600; 
+
+    /*Address of ERC721 token contract*/ 
     address public nftContract;
+
+    /*Address of ERC1155 token contract*/ 
     address public erc1155Contract;
+
+    /*address of ERC20 token contract */
     address public token;
 
-    constructor( address _voteToken) {
+    constructor(address _voteToken) {
         token = _voteToken;
         nftContract = address(new ACDM721());
         erc1155Contract = address(new ACDM1155());
@@ -60,10 +68,8 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
         uint256 idItem;
         uint256 amount;
     }
-    mapping(uint256 => uint256) amounts;
-
+    
     mapping(uint256 => Auction) private auctions; //auctionID => Auction
-
     mapping(uint256 => MarketItem) private idToMarketItem;//itemId => MarketItem
     
     //Emitted when auction time changed
@@ -216,10 +222,11 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
         }   
     }
 
-    /** @notice List item on marketplace.
-     * @dev Update itemsId, emit MarketItemCreated event.
+    /** @notice List amount of ERC1155 tokens on marketplace.
+     * @dev emit MarketItemCreated event.
      * @param _itemId Id of listed item.
      * @param _price Price in EIP20 tokens for item.
+     * @param _amount Amount of ERC1155 tokens for list.
     */
     function listItem(
         uint256 _itemId, 
@@ -330,41 +337,13 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
             uint256 _startPrice
         ) external
         itemOwner(_idItem)
-        itemNotSale(_idItem)
-        returns(bool){
-        
+        itemNotSale(_idItem){
+
         _listItem(_idItem);
-    
         _createAuction(_startPrice, 1, _minBidStep,_idItem);
-        return true;
-    }
-    function _createAuction(uint256 _startPrice, uint256 _amount, uint256 _minBidStep, uint256 _itemId) private{
-        _auctionIds.increment();
-        uint256 auctionIds = _auctionIds.current();
-        
-        auctions[auctionIds] = Auction(
-            msg.sender,
-            address(0),
-            true,
-            _startPrice,
-            0,
-            _minBidStep,
-            (block.timestamp + auctionTime),
-            _itemId,
-            _amount
-        );
-         emit AuctionStarted(
-            msg.sender,
-            _startPrice,
-            _minBidStep,
-            (block.timestamp + auctionTime),
-            auctionIds,
-            _itemId,
-            _amount
-        );
     }
 
-    /** @notice List iem on aution by item owner.
+    /** @notice List item on aution by item owner.
      * @dev Create auction, emit AuctionStarted event.
      * @param _idItem Id of ERC721 token that owner want to list on auction.
      * @param _minBidStep The amount of minimum bid step in auction in ERC20 token.
@@ -377,14 +356,11 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
             uint256 _startPrice
         ) external
         itemOwner(_idItem)
-        itemNotSale(_idItem)
-        returns(bool){
+        itemNotSale(_idItem){
             require(_amount <= idToMarketItem[_idItem].amountItems,"Insufficent items");
             
             _listItem(_idItem, _amount);
-            
             _createAuction(_startPrice, _amount, _minBidStep,_idItem);
-        return true;
     }
 
     /** @notice Make bid in choisen auction by user.
@@ -456,6 +432,44 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
         emit AuctionFinished(auctions[_auctionId].owner, _auctionId, false);
     }
 
+    /** @notice Create new auction.
+     * @dev Create auction, emit AuctionStarted event.
+     * @param _itemId Id of ERC721 token that owner want to list on auction.
+     * @param _minBidStep The amount of minimum bid step in auction in ERC20 token.
+     * @param _startPrice The amount of price in ERC20 token, with which auction will start.
+     * @param _amount The amount of ERC1155 tokens.
+    */
+    function _createAuction(
+        uint256 _startPrice, 
+        uint256 _amount, 
+        uint256 _minBidStep, 
+        uint256 _itemId
+        ) private
+    {
+        _auctionIds.increment();
+        uint256 auctionIds = _auctionIds.current();
+        
+        auctions[auctionIds] = Auction(
+            msg.sender,
+            address(0),
+            true,
+            _startPrice,
+            0,
+            _minBidStep,
+            (block.timestamp + auctionTime),
+            _itemId,
+            _amount
+        );
+         emit AuctionStarted(
+            msg.sender,
+            _startPrice,
+            _minBidStep,
+            (block.timestamp + auctionTime),
+            auctionIds,
+            _itemId,
+            _amount
+        );
+    }
 
     /** @notice Transfer ERC20 tokens to lastBidder if he exist.
      * @dev Use for return ERC20 to last bidder.
@@ -507,7 +521,6 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
     */
     function _listItem(uint256 _itemId, uint256 _amount) private{
         if(idToMarketItem[_itemId].amountItems > _amount){
-           // idToMarketItem[_itemId].amountItems = _amount;
             _itemIds.increment();
             uint256 itemId = _itemIds.current();
             idToMarketItem[itemId] = MarketItem(
@@ -597,8 +610,14 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder{
         } 
         return items;
     }
+
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Receiver, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
+    /** Always returns `IERC721Receiver.onERC721Received.selector`. */
+    function onERC721Received(address, address, uint256, bytes memory) public virtual override returns (bytes4) {
+    return this.onERC721Received.selector;
+  }
 }
 

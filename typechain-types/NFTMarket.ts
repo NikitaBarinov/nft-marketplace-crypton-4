@@ -913,7 +913,7 @@ export interface NFTMarket extends BaseContract {
       _minBidStep: BigNumberish,
       _startPrice: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<void>;
 
     makeBid(
       _auctionId: BigNumberish,
