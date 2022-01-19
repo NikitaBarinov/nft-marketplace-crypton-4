@@ -1,7 +1,7 @@
-const testData  = require("./nft/nft-metadata.json");
+const testData  = require("./metadata/nft-metadata.json");
+const testData1  = require("./metadata/third.json");
+const testData2  = require("./metadata/pojiloy.json");
 
-const testData1  = require("./nft/third.json");
-const testData2  = require("./nft/pojiloy.json");
 task("createItem", "Create item")
 .addParam("address", "Address receiver")
 .setAction(async (taskArgs) => {
