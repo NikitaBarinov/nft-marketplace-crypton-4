@@ -26,7 +26,7 @@ describe('NFTMarket contract', () => {
         market = await Market.connect(owner).deploy(token.address);
         await market.deployed();
        
-        mvAddress = await market.nftContract();
+        mvAddress = await market.erc721Contract();
         mv = await ethers.getContractAt("ACDM721", mvAddress);
         
         erc1155Address = await market.erc1155Contract();
@@ -114,7 +114,7 @@ describe('NFTMarket contract', () => {
         
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(false);
         });
@@ -150,7 +150,7 @@ describe('NFTMarket contract', () => {
         
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(100);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(true);
         });
@@ -240,7 +240,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(addr1.address);
             expect(itemInfo.sale).to.equal(false);
         });
@@ -334,7 +334,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(true);
 
@@ -348,7 +348,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(true);
 
@@ -385,7 +385,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(false);
         });
@@ -467,7 +467,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(true);
 
@@ -796,7 +796,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(addr1.address);
             expect(itemInfo.sale).to.equal(false);
 
@@ -1031,7 +1031,7 @@ describe('NFTMarket contract', () => {
                 
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(0);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(false);
             
@@ -1259,7 +1259,7 @@ describe('NFTMarket contract', () => {
     
             expect(Number(itemInfo.itemId)).to.equal(1);
             expect(Number(itemInfo.price)).to.equal(100);
-            expect(itemInfo.nftContract).to.equal(mv.address);
+            expect(itemInfo.erc721Contract).to.equal(mv.address);
             expect(itemInfo.owner).to.equal(owner.address);
             expect(itemInfo.sale).to.equal(true);
         });

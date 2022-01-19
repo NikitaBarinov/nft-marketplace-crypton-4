@@ -21,7 +21,7 @@ export type MarketItemStruct = {
   itemId: BigNumberish;
   amountItems: BigNumberish;
   price: BigNumberish;
-  nftContract: string;
+  erc721Contract: string;
   owner: string;
   sale: boolean;
 };
@@ -37,7 +37,7 @@ export type MarketItemStructOutput = [
   itemId: BigNumber;
   amountItems: BigNumber;
   price: BigNumber;
-  nftContract: string;
+  erc721Contract: string;
   owner: string;
   sale: boolean;
 };
@@ -89,6 +89,7 @@ export interface NFTMarketInterface extends utils.Interface {
     "createItem(address,string)": FunctionFragment;
     "createItemBatch(address,uint256[],uint256[],bytes)": FunctionFragment;
     "erc1155Contract()": FunctionFragment;
+    "erc721Contract()": FunctionFragment;
     "fetchAuctionItems()": FunctionFragment;
     "fetchMarketItems()": FunctionFragment;
     "finishAuction(uint256)": FunctionFragment;
@@ -100,14 +101,17 @@ export interface NFTMarketInterface extends utils.Interface {
     "listItem(uint256,uint256)": FunctionFragment;
     "listItemOnAuction(uint256,uint256,uint256)": FunctionFragment;
     "makeBid(uint256,uint256)": FunctionFragment;
-    "nftContract()": FunctionFragment;
     "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)": FunctionFragment;
     "onERC1155Received(address,address,uint256,uint256,bytes)": FunctionFragment;
+    "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
     "pause()": FunctionFragment;
     "paused()": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
+    "sweepERC1155(address,uint256,uint256)": FunctionFragment;
+    "sweepERC20(address,uint256)": FunctionFragment;
+    "sweepERC721(address,uint256)": FunctionFragment;
     "token()": FunctionFragment;
     "unpause()": FunctionFragment;
   };
@@ -157,6 +161,10 @@ export interface NFTMarketInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "erc721Contract",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "fetchAuctionItems",
     values?: undefined
   ): string;
@@ -201,16 +209,16 @@ export interface NFTMarketInterface extends utils.Interface {
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "nftContract",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "onERC1155BatchReceived",
     values: [string, string, BigNumberish[], BigNumberish[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC1155Received",
     values: [string, string, BigNumberish, BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "onERC721Received",
+    values: [string, string, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
@@ -225,6 +233,18 @@ export interface NFTMarketInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sweepERC1155",
+    values: [string, BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sweepERC20",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sweepERC721",
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
@@ -265,6 +285,10 @@ export interface NFTMarketInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "erc721Contract",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "fetchAuctionItems",
     data: BytesLike
   ): Result;
@@ -291,15 +315,15 @@ export interface NFTMarketInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "makeBid", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "nftContract",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "onERC1155BatchReceived",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "onERC1155Received",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "onERC721Received",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
@@ -311,6 +335,15 @@ export interface NFTMarketInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "sweepERC1155",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "sweepERC20", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "sweepERC721",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
@@ -414,7 +447,7 @@ export type MarketItemCanceledEventFilter =
 export type MarketItemCreatedEvent = TypedEvent<
   [string, string, BigNumber, BigNumber, boolean],
   {
-    nftContract: string;
+    erc721Contract: string;
     owner: string;
     itemId: BigNumber;
     price: BigNumber;
@@ -526,6 +559,8 @@ export interface NFTMarket extends BaseContract {
 
     erc1155Contract(overrides?: CallOverrides): Promise<[string]>;
 
+    erc721Contract(overrides?: CallOverrides): Promise<[string]>;
+
     fetchAuctionItems(
       overrides?: CallOverrides
     ): Promise<[MarketItemStructOutput[]]>;
@@ -597,8 +632,6 @@ export interface NFTMarket extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    nftContract(overrides?: CallOverrides): Promise<[string]>;
-
     onERC1155BatchReceived(
       arg0: string,
       arg1: string,
@@ -614,6 +647,14 @@ export interface NFTMarket extends BaseContract {
       arg2: BigNumberish,
       arg3: BigNumberish,
       arg4: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    onERC721Received(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish,
+      arg3: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -639,6 +680,25 @@ export interface NFTMarket extends BaseContract {
       interfaceId: BytesLike,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
+
+    sweepERC1155(
+      _to: string,
+      _itemId: BigNumberish,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    sweepERC20(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    sweepERC721(
+      _to: string,
+      _itemId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     token(overrides?: CallOverrides): Promise<[string]>;
 
@@ -690,6 +750,8 @@ export interface NFTMarket extends BaseContract {
   ): Promise<ContractTransaction>;
 
   erc1155Contract(overrides?: CallOverrides): Promise<string>;
+
+  erc721Contract(overrides?: CallOverrides): Promise<string>;
 
   fetchAuctionItems(
     overrides?: CallOverrides
@@ -762,8 +824,6 @@ export interface NFTMarket extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  nftContract(overrides?: CallOverrides): Promise<string>;
-
   onERC1155BatchReceived(
     arg0: string,
     arg1: string,
@@ -779,6 +839,14 @@ export interface NFTMarket extends BaseContract {
     arg2: BigNumberish,
     arg3: BigNumberish,
     arg4: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  onERC721Received(
+    arg0: string,
+    arg1: string,
+    arg2: BigNumberish,
+    arg3: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -804,6 +872,25 @@ export interface NFTMarket extends BaseContract {
     interfaceId: BytesLike,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  sweepERC1155(
+    _to: string,
+    _itemId: BigNumberish,
+    _amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  sweepERC20(
+    _to: string,
+    _amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  sweepERC721(
+    _to: string,
+    _itemId: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   token(overrides?: CallOverrides): Promise<string>;
 
@@ -849,6 +936,8 @@ export interface NFTMarket extends BaseContract {
     ): Promise<void>;
 
     erc1155Contract(overrides?: CallOverrides): Promise<string>;
+
+    erc721Contract(overrides?: CallOverrides): Promise<string>;
 
     fetchAuctionItems(
       overrides?: CallOverrides
@@ -905,7 +994,7 @@ export interface NFTMarket extends BaseContract {
       _minBidStep: BigNumberish,
       _startPrice: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<void>;
 
     "listItemOnAuction(uint256,uint256,uint256,uint256)"(
       _idItem: BigNumberish,
@@ -920,8 +1009,6 @@ export interface NFTMarket extends BaseContract {
       _newPrice: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    nftContract(overrides?: CallOverrides): Promise<string>;
 
     onERC1155BatchReceived(
       arg0: string,
@@ -938,6 +1025,14 @@ export interface NFTMarket extends BaseContract {
       arg2: BigNumberish,
       arg3: BigNumberish,
       arg4: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    onERC721Received(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish,
+      arg3: BytesLike,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -961,6 +1056,25 @@ export interface NFTMarket extends BaseContract {
       interfaceId: BytesLike,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    sweepERC1155(
+      _to: string,
+      _itemId: BigNumberish,
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    sweepERC20(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    sweepERC721(
+      _to: string,
+      _itemId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     token(overrides?: CallOverrides): Promise<string>;
 
@@ -1044,14 +1158,14 @@ export interface NFTMarket extends BaseContract {
     MarketItemCanceled(_itemId?: null): MarketItemCanceledEventFilter;
 
     "MarketItemCreated(address,address,uint256,uint256,bool)"(
-      nftContract?: string | null,
+      erc721Contract?: string | null,
       owner?: string | null,
       itemId?: BigNumberish | null,
       price?: null,
       sale?: null
     ): MarketItemCreatedEventFilter;
     MarketItemCreated(
-      nftContract?: string | null,
+      erc721Contract?: string | null,
       owner?: string | null,
       itemId?: BigNumberish | null,
       price?: null,
@@ -1143,6 +1257,8 @@ export interface NFTMarket extends BaseContract {
 
     erc1155Contract(overrides?: CallOverrides): Promise<BigNumber>;
 
+    erc721Contract(overrides?: CallOverrides): Promise<BigNumber>;
+
     fetchAuctionItems(overrides?: CallOverrides): Promise<BigNumber>;
 
     fetchMarketItems(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1213,8 +1329,6 @@ export interface NFTMarket extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    nftContract(overrides?: CallOverrides): Promise<BigNumber>;
-
     onERC1155BatchReceived(
       arg0: string,
       arg1: string,
@@ -1230,6 +1344,14 @@ export interface NFTMarket extends BaseContract {
       arg2: BigNumberish,
       arg3: BigNumberish,
       arg4: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    onERC721Received(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish,
+      arg3: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1254,6 +1376,25 @@ export interface NFTMarket extends BaseContract {
     supportsInterface(
       interfaceId: BytesLike,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    sweepERC1155(
+      _to: string,
+      _itemId: BigNumberish,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    sweepERC20(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    sweepERC721(
+      _to: string,
+      _itemId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     token(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1309,6 +1450,8 @@ export interface NFTMarket extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     erc1155Contract(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    erc721Contract(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     fetchAuctionItems(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1380,8 +1523,6 @@ export interface NFTMarket extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    nftContract(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     onERC1155BatchReceived(
       arg0: string,
       arg1: string,
@@ -1397,6 +1538,14 @@ export interface NFTMarket extends BaseContract {
       arg2: BigNumberish,
       arg3: BigNumberish,
       arg4: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    onERC721Received(
+      arg0: string,
+      arg1: string,
+      arg2: BigNumberish,
+      arg3: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1421,6 +1570,25 @@ export interface NFTMarket extends BaseContract {
     supportsInterface(
       interfaceId: BytesLike,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    sweepERC1155(
+      _to: string,
+      _itemId: BigNumberish,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    sweepERC20(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    sweepERC721(
+      _to: string,
+      _itemId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     token(overrides?: CallOverrides): Promise<PopulatedTransaction>;

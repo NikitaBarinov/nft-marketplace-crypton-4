@@ -13,4 +13,3 @@ require('./getAuction.js');
 require('./listItemOnAuction.js');
 require('./makeBid.js');
 require('./changeAuctionTime.js');
-require('./createToken.js');

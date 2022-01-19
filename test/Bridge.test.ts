@@ -1,30 +1,31 @@
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+import { Contract, ContractFactory } from "ethers";
 const testData  = require("./fixtures/nft-metadata.json");
 
 describe('Bridge contract', () => {
-    let Token, token1, token2, bridge1, bridge2, Bridge,Bridge2, owner, addr1, addr2;
+    let 
+        Token: ContractFactory, 
+        token1: Contract, 
+        token2: Contract, 
+        bridge1: Contract, 
+        bridge2: Contract, 
+        Bridge: ContractFactory, 
+        owner: SignerWithAddress, 
+        addr1: SignerWithAddress, 
+        addr2: SignerWithAddress;
     const zero_address = "0x0000000000000000000000000000000000000000";
     const ramsesURI = (testData.metadata).toString();
 
     const chainId1 = 1;
     const chainId2 = 2;
-    const types = [
-        'address', 'uint256', 'uint256', 'uint256', 'uint256',
-      ];
-
-      const values = [
-        owner.address, tokenId, chainId, chainId, nonce
-      ];
-
-      const hash = ethers.utils.solidityKeccak256(types, values);
-      const sign = await validatorWallet.signMessage(ethers.utils.arrayify(hash));
-      const { v, r, s } = ethers.utils.splitSignature(sign);
 
     before(async () => {
         [addr1, owner, addr2] = await ethers.getSigners();
         Token = await ethers.getContractFactory("ACDM721");
         Bridge = await ethers.getContractFactory("Bridge"); 
+        
     });
     
     beforeEach(async () => {
@@ -39,6 +40,18 @@ describe('Bridge contract', () => {
 
         bridge2 = await Bridge.connect(owner).deploy(owner.address, token2.address);
         await bridge2.deployed();
+
+        const types = [
+            'address', 'uint256', 'uint256', 'uint256', 'uint256',
+          ];
+    
+        const values = [
+            owner.address, 1, 97, 4, 1
+        ];
+        
+        const hash = ethers.utils.solidityKeccak256(types, values);
+        const sign = await ethers.utils.validatorWallet.signMessage(ethers.utils.arrayify(hash));
+        const { v, r, s } = ethers.utils.splitSignature(sign);
 
         token1.connect(owner).createToken(owner.address,ramsesURI);
         token1.connect(owner).createToken(addr1.address,ramsesURI);

@@ -30,7 +30,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
     uint256 public auctionTime = 3 * 24 * 3600; 
 
     /*Address of ERC721 token contract*/ 
-    address public _erc721Contract;
+    address public erc721Contract;
 
     /*Address of ERC1155 token contract*/ 
     address public erc1155Contract;
@@ -40,7 +40,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
 
     constructor(address _voteToken) {
         token = _voteToken;
-        _erc721Contract = address(new ACDM721());
+        erc721Contract = address(new ACDM721());
         erc1155Contract = address(new ACDM1155());
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -52,7 +52,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
         uint256 itemId;
         uint256 amountItems;
         uint256 price;
-        address _erc721Contract;
+        address erc721Contract;
         address owner;
         bool sale;
     }
@@ -175,13 +175,13 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
         _itemIds.increment();
         uint256 itemId = _itemIds.current();
         
-        ACDM721(_erc721Contract).createToken(_to, tokenURI);
+        ACDM721(erc721Contract).createToken(_to, tokenURI);
 
         idToMarketItem[itemId] = MarketItem(
             itemId,
             1,
             0,
-            _erc721Contract,
+            erc721Contract,
             _to,
             false
         );
@@ -245,7 +245,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
         idToMarketItem[_itemId].price = _price;
 
         emit MarketItemCreated(
-            _erc721Contract, 
+            erc721Contract, 
             msg.sender,  
             _itemId,
             _price,
@@ -274,7 +274,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
         idToMarketItem[_itemId].price = _price;
 
         emit MarketItemCreated(
-            _erc721Contract, 
+            erc721Contract, 
             msg.sender,  
             _itemId,
             _price,
@@ -499,9 +499,9 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
     */
     function cancelItem_(uint256 _itemId, address _to) private{
         idToMarketItem[_itemId].sale = false;
-        if(idToMarketItem[_itemId]._erc721Contract == _erc721Contract){
-            IERC721(_erc721Contract).transferFrom(address(this), _to, idToMarketItem[_itemId].itemId);
-        }else if(idToMarketItem[_itemId]._erc721Contract == erc1155Contract){
+        if(idToMarketItem[_itemId].erc721Contract == erc721Contract){
+            IERC721(erc721Contract).transferFrom(address(this), _to, idToMarketItem[_itemId].itemId);
+        }else if(idToMarketItem[_itemId].erc721Contract == erc1155Contract){
             IERC1155(erc1155Contract).safeTransferFrom(address(this), _to, idToMarketItem[_itemId].itemId, idToMarketItem[_itemId].amountItems,"");
         }
     }
@@ -511,7 +511,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
      * @param _itemId Id of listing item.
     */
     function _listItem(uint256 _itemId) private{
-        IERC721(_erc721Contract).transferFrom(msg.sender, address(this), _itemId);
+        IERC721(erc721Contract).transferFrom(msg.sender, address(this), _itemId);
         idToMarketItem[_itemId].sale = true;
     }
 
@@ -626,7 +626,7 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
   }
     /** Sweep ERC721 token from marketplace address to _to address */
   function sweepERC721(address _to, uint256 _itemId)external onlyRole(DEFAULT_ADMIN_ROLE){
-      IERC721(_erc721Contract).transferFrom(address(this), _to, _itemId);
+      IERC721(erc721Contract).transferFrom(address(this), _to, _itemId);
   }
     /** Sweep ERC1155 token from marketplace address to _to address */
   function sweepERC1155(address _to, uint256 _itemId, uint256 _amount)external onlyRole(DEFAULT_ADMIN_ROLE){
