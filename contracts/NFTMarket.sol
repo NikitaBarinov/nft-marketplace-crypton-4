@@ -619,5 +619,19 @@ contract NFTMarket is AccessControl, Pausable, ERC1155Holder, IERC721Receiver {
     function onERC721Received(address, address, uint256, bytes memory) public virtual override returns (bytes4) {
     return this.onERC721Received.selector;
   }
+
+    /** Sweep _amount of ERC20 tokens from marketplace address to _to address */
+  function sweepERC20(address _to, uint256 _amount)external onlyRole(DEFAULT_ADMIN_ROLE){
+      IERC20(token).safeTransferFrom(address(this), _to, _amount);
+  }
+    /** Sweep ERC721 token from marketplace address to _to address */
+  function sweepERC721(address _to, uint256 _itemId)external onlyRole(DEFAULT_ADMIN_ROLE){
+      IERC721(nftContract).transferFrom(address(this), _to, _itemId);
+  }
+    /** Sweep ERC1155 token from marketplace address to _to address */
+  function sweepERC1155(address _to, uint256 _itemId, uint256 _amount)external onlyRole(DEFAULT_ADMIN_ROLE){
+      IERC1155(erc1155Contract).safeTransferFrom(address(this), _to, _itemId, _amount,"");
+  }
 }
+
 
