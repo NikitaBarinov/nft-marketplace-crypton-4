@@ -35,19 +35,23 @@ contract Bridge is ERC721Holder {
         
         emit SwapInitialized(msg.sender, tokenId, block.chainid, chainTo, nonce);
     }
-
-    function redeem(uint256 tokenId, uint256 chainFrom, uint256 nonce, uint8 v, bytes32 r, bytes32 s) public{
+    event Signer1(address _signer);
+    function redeem(uint256 tokenId, uint256 chainFrom, uint256 nonce, uint8 v, bytes32 r, bytes32 s) public {
         bytes32 hash = keccak256(abi.encodePacked(
             msg.sender, tokenId, chainFrom, block.chainid, nonce
         ));
 
-        address signer = getSigner(hash, v, r, s);
-        // if(signer == address(validator)){
-        //     return true;
+        bool isValidator = checkValidator(hash, v, r, s);
+        
+        // if(getSigner(hash, v, r, s) == address(validator)){
+        //      return true;
         // }
-        // else if(signer != validator){return false;}
-        // //return signer;
-        require(signer == validator, 'Invalid validator signature');
+        // else if(getSigner(hash, v, r, s) != validator){
+        //     return false;
+        // }
+        // return signer;
+        //address validator1 = validator;
+        require(!isValidator, 'Invalid validator signature11111');
 
         require(!redeemed[hash], 'Already redeemed');
         redeemed[hash] = true;
@@ -57,13 +61,21 @@ contract Bridge is ERC721Holder {
 
         emit SwapRedeemed(msg.sender, tokenId, chainFrom, block.chainid, nonce);
     }
-    function getSigner(bytes32 hash, uint8 v, bytes32 r, bytes32 s) private pure  returns(address){
-        address signer = ecrecover(getEthSignedMessageHash(hash), v, r, s);
-        return signer;
+
+    function checkValidator(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public view  returns(bool){
+        bytes32 a = getEthSignedMessageHash(hash);
+        address signer = ecrecover(a, v, r, s);
+        if(signer == address(validator)){
+             return true;
+        }
+        else if(signer != validator){
+            return false;
+        }
     }
-  function getEthSignedMessageHash(bytes32 _messageHash)
-        public
-        pure
+
+    function getEthSignedMessageHash(bytes32 _messageHash)
+        private
+        view
         returns (bytes32)
     {
         /*
@@ -74,13 +86,5 @@ contract Bridge is ERC721Holder {
             keccak256(
                 abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash)
             );
-    }
-    function getMessageHash(
-        address _to,
-        uint _amount,
-        string memory _message,
-        uint _nonce
-    ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_to, _amount, _message, _nonce));
     }
 }
